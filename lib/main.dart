@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'dart:math';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,7 +9,7 @@ void main() async{
     join(await getDatabasesPath(), 'ToDoDatabase.db'),
     onCreate: (db, version){
       return db.execute(
-        'CREATE TABLE TODOS(name TEXT, value INTEGER)'
+        'CREATE TABLE TODOS(id INTEGER, name TEXT, value INTEGER, date TEXT )'
       );
     },
     version: 1,
@@ -68,8 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
            CreateTaskName(context).then((value){
              taskName = value;
              setState((){
-               insertTask(TODODataSet(taskName, false));
-               taskArray.add(TODODataSet(taskName,false));
+               insertTask(TODODataSet(taskArray.length,taskName, false));
+               taskArray.add(TODODataSet(taskArray.length,taskName,false));
                print('First text field: $taskArray');
              });
            });
@@ -84,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
     for(int i = 0; i < list.length; i++){
       String name = '';
       bool check = false;
+      int id = 0;
       list[i].entries.forEach((entry) {
         if(entry.key == 'name'){
           name = entry.value.toString();
@@ -91,9 +93,12 @@ class _MyHomePageState extends State<MyHomePage> {
         else if(entry.key == 'value'){
           check = toBool(entry.value);
         }
+        else if(entry.key =='id'){
+          id = entry.value;
+        }
       });
       if(name != ''){
-        taskArray.add(TODODataSet(name, check));
+        taskArray.add(TODODataSet(id,name,check));
       }
     }
   }
@@ -108,36 +113,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> insertTask(TODODataSet task) async{
     final db = await widget.database;
     final value;
+    int id = Random().nextInt(4294967296);
     if(task.value == true){
       value = 1;
     }
     else{
       value = 0;
     }
-    Map<String, dynamic> map = {'name':task.name,'value':value};
+    Map<String, dynamic> map = {'id': id, 'name':task.name,'value':value};
     await db.insert('TODOS',map,conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<void> deleteTask(TODODataSet task) async{
-    final db = await widget.database;
-    final value;
-    if(task.value == true){
-      value = 1;
-    }
-    else{
-      value = 0;
-    }
-    Map<String, dynamic> map = {'name':task.name,'value':value};
-    await db.delete(
-      'TODOS',
-      map,
-      where:'name = ?',
-      whereArgs:[task.name],
-    );
-  }
 }
-
-
 Future<String> CreateTaskName(BuildContext context) async{
   final result = await  Navigator.push(
     context,
@@ -245,9 +232,10 @@ class _TaskListState extends State<TaskList> {
     }
     await db.delete(
       'TODOS',
-      where:'name = ?',
-      whereArgs:[task.name],
+      where:'id = ?',
+      whereArgs:[task.id],
     );
+    debugPrint(task.id.toString());
   }
 }
 
@@ -288,20 +276,20 @@ class _TaskItemState extends State<TaskItem> {
     else{
       value = 0;
     }
-    Map<String, dynamic> map = {'name':task.name,'value':value};
+    Map<String, dynamic> map = {'id': task.id,'name':task.name,'value':value};
     await db.update(
       'TODOS',
       map,
-      where:'name = ?',
-      whereArgs:[task.name],
+      where:'id = ?',
+      whereArgs:[task.id],
     );
   }
 }
-class TODODataSet<String, bool> {
+class TODODataSet<int,String, bool> {
   String name;
   bool value;
-
-  TODODataSet(this.name, this.value);
+  int id;
+  TODODataSet(this.id,this.name, this.value);
 
   set setValue(bool newValue){
     value = newValue;
