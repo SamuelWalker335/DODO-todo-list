@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:math';
+import 'package:calendar_timeline/calendar_timeline.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,7 +55,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SingleChildScrollView(
       child: Column(
           children: [
-            Progress(),
+            Calendar(),
+            //Progress(),
             TaskList( taskArray: taskArray, database: widget.database,),
             Image.asset('assets/images/dodo.png',
               height: 200,
@@ -134,6 +136,52 @@ Future<String> CreateTaskName(BuildContext context) async{
   return(result);
 }
 
+class Calendar extends StatefulWidget{
+  @override
+  State<Calendar> createState() => _CalendarState();
+}
+
+class _CalendarState extends State<Calendar> {
+  DateTime? _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetSelectedDate();
+  }
+
+  void _resetSelectedDate() {
+    _selectedDate = DateTime.now();
+  }
+
+  @override
+  Widget build(BuildContext context){
+    return Column(
+      children: [
+        CalendarTimeline(
+          showYears: false,
+          initialDate: DateTime.now(),
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(Duration(days: 365)),
+          onDateSelected: (date) {
+            setState(() {
+              _selectedDate = date;
+            });
+          },
+          leftMargin: 20,
+          monthColor: Colors.teal[200],
+          dayColor: Colors.teal[200],
+          dayNameColor: Color(0xFF333A47),
+          activeDayColor: Colors.white,
+          activeBackgroundDayColor: Colors.redAccent[100],
+          dotsColor: Color(0xFF333A47),
+          selectableDayPredicate: (date) => date.day != 23,
+          locale: 'en',
+        ),
+      ],
+    );
+  }
+}
 //input name of TO_DO item
 class TextInput extends StatefulWidget {
   const TextInput({super.key});
