@@ -101,11 +101,12 @@ class _TaskItemState extends State<TaskItem> {
   }
 }
 
-class TODODataSet<int,String, bool> {
+class TODODataSet<int, String, bool> {
   String name;
   bool value;
   int id;
-  TODODataSet(this.id,this.name, this.value);
+  String date;
+  TODODataSet(this.id,this.name, this.value, this.date);
 
   set setValue(bool newValue){
     value = newValue;

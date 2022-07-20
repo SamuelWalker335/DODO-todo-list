@@ -35,10 +35,10 @@ class TODOList extends StatelessWidget{
     );
   }
 }
-
 //home page
 class MyHomePage extends StatefulWidget{
   final database;
+
   const MyHomePage({Key? key, required this.database}) : super(key:key);
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -47,8 +47,16 @@ class MyHomePage extends StatefulWidget{
 class _MyHomePageState extends State<MyHomePage> {
   String taskName = '';
   var taskArray = [];
+  var dateString = '';
+  DateTime selectedDate = DateTime.now();
   void initState() {
-    retrieveTasks();
+    dateString = DateToString(selectedDate);
+    //_resetSelectedDate();
+    retrieveTasks(DateToString(selectedDate));
+  }
+  //reset date to todays date
+  void _resetSelectedDate() {
+    selectedDate = DateTime.now();
   }
   @override
   Widget build(BuildContext context){
@@ -59,7 +67,33 @@ class _MyHomePageState extends State<MyHomePage> {
       body: SingleChildScrollView(
       child: Column(
           children: [
-            Calendar(),
+            //calendar
+            CalendarTimeline(
+              showYears: false,
+              initialDate: selectedDate,
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(Duration(days: 365)),
+              onDateSelected: (date) {
+                setState(() {
+                  if(date != null){
+                    selectedDate = date;
+                    initState();
+                  }
+                  else{
+                    print("help");
+                  }
+                });
+              },
+              leftMargin: 20,
+              monthColor: Colors.teal[200],
+              dayColor: Colors.teal[200],
+              dayNameColor: Color(0xFF333A47),
+              activeDayColor: Colors.white,
+              activeBackgroundDayColor: Colors.redAccent[100],
+              dotsColor: Color(0xFF333A47),
+              selectableDayPredicate: (date) => date.day != 23,
+              locale: 'en',
+            ),
             //Progress(),
             TaskList( taskArray: taskArray, database: widget.database,),
             Image.asset('assets/images/dodo.png',
@@ -75,9 +109,11 @@ class _MyHomePageState extends State<MyHomePage> {
            CreateTaskName(context).then((value){
              taskName = value;
              setState((){
-               insertTask(TODODataSet(taskArray.length,taskName, false));
-               taskArray.add(TODODataSet(taskArray.length,taskName,false));
-               print('First text field: $taskArray');
+               dateString = DateToString(selectedDate);
+               //print(dateString);
+               insertTask(TODODataSet(taskArray.length,taskName, false, dateString));
+               taskArray.add(TODODataSet(taskArray.length,taskName,false, dateString));
+               //print(cal.selectedDate);
              });
            });
           });
@@ -85,11 +121,25 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-  Future<void> retrieveTasks() async{
+  //convert date to a string
+  String DateToString(DateTime date){
+    var day = 0;
+    var month = 0;
+    var year = 0;
+    day = date.day;
+    month = date.month;
+    year = date.year;
+    String dateString = "$day/$month/$year";
+    return dateString;
+  }
+  Future<void> retrieveTasks(String currentSelectedDate) async{
+    taskArray.length = 0;
+    //selecting all from database
     List<Map> list = await widget.database.rawQuery('SELECT * FROM TODOS');
     print(list);
     for(int i = 0; i < list.length; i++){
       String name = '';
+      String date = currentSelectedDate;
       bool check = false;
       int id = 0;
       list[i].entries.forEach((entry) {
@@ -102,9 +152,14 @@ class _MyHomePageState extends State<MyHomePage> {
         else if(entry.key =='id'){
           id = entry.value;
         }
+        else if(entry.key == 'date'){
+          date = entry.value;
+        }
       });
-      if(name != ''){
-        taskArray.add(TODODataSet(id,name,check));
+      //adding them to the array
+      if(name != '' && date == dateString){
+        taskArray.add(TODODataSet(id,name,check,date));
+        //print('First text field: $taskArray');
       }
     }
   }
@@ -126,7 +181,7 @@ class _MyHomePageState extends State<MyHomePage> {
     else{
       value = 0;
     }
-    Map<String, dynamic> map = {'id': id, 'name':task.name,'value':value};
+    Map<String, dynamic> map = {'id': id, 'name':task.name,'value':value,'date': task.date};
     await db.insert('TODOS',map,conflictAlgorithm: ConflictAlgorithm.replace);
   }
 

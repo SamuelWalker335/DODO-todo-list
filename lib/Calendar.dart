@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_timeline/calendar_timeline.dart';
+import 'package:todo_list/main.dart';
 class Calendar extends StatefulWidget{
+  DateTime selectedDate = DateTime.now();
   @override
   State<Calendar> createState() => _CalendarState();
 }
 
 class _CalendarState extends State<Calendar> {
-  DateTime? _selectedDate;
-
   @override
   void initState() {
     super.initState();
@@ -15,7 +15,7 @@ class _CalendarState extends State<Calendar> {
   }
 
   void _resetSelectedDate() {
-    _selectedDate = DateTime.now();
+    widget.selectedDate = DateTime.now();
   }
 
   @override
@@ -24,12 +24,17 @@ class _CalendarState extends State<Calendar> {
       children: [
         CalendarTimeline(
           showYears: false,
-          initialDate: DateTime.now(),
+          initialDate: widget.selectedDate,
           firstDate: DateTime.now(),
           lastDate: DateTime.now().add(Duration(days: 365)),
           onDateSelected: (date) {
             setState(() {
-              _selectedDate = date;
+              if(date != null){
+                widget.selectedDate = date;
+              }
+              else{
+                print("help");
+              }
             });
           },
           leftMargin: 20,
@@ -44,5 +49,17 @@ class _CalendarState extends State<Calendar> {
         ),
       ],
     );
+  }
+  Future<String> retrieveDate() async{
+    var day = 0;
+    var month = 0;
+    var year = 0;
+    if(widget.selectedDate != null){
+      day = widget.selectedDate.day;
+      month = widget.selectedDate.month;
+      year = widget.selectedDate.year;
+    }
+    String date = "$day/$month/$year";
+    return date;
   }
 }
