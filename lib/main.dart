@@ -215,7 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
             TaskList( taskArray: taskArray, database: widget.database,callbackFunction: initState),
           ],
         ),
-      ),
+      ),//new
 
       //add tasks button
       floatingActionButton: FloatingActionButton(
